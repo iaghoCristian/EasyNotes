@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">EasyNotes</string>
+    <string name="yes">Confirm delete</string>
+    <string name="cancel">Cancel</string>
+    <string name="deleteConfirm">Are you sure?</string>
+    <string-array name="frequency_option">
+        <item>Unique</item>
+        <item>Hourly</item>
+        <item>Diary</item>
+        <item>Weekenly</item>
+        <item>Monthly</item>
+
+    </string-array>
+</resources>
