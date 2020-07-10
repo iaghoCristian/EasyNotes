@@ -12,39 +12,30 @@ import com.example.easynotes.repository.NoteRepository
 
 class MainActivity : AppCompatActivity(), CardAdapter.CardViewHolder.OnNoteListener {
 
-    var recyclerView : RecyclerView? = null
-    var notes : NoteRepository
-
-    init{
-        this.notes = NoteRepository()
-    }
-
-    fun callRecycler(){
-        var layoutManager : LinearLayoutManager = LinearLayoutManager(this)
-        var adapter  = CardAdapter(notes,this)
-
-        recyclerView = findViewById(R.id.recyclerView) as RecyclerView?
-        recyclerView?.layoutManager = layoutManager
-        recyclerView?.adapter= adapter
-    }
+    lateinit var recyclerView : RecyclerView
+    lateinit var notes : NoteRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        callRecycler()
+        notes = NoteRepository(this)
+        recyclerView = findViewById(R.id.recyclerView) as RecyclerView
 
     }
 
     override fun onResume(){
         super.onResume()
-        callRecycler()
+        var layoutManager : LinearLayoutManager = LinearLayoutManager(this)
+        var adapter  = CardAdapter(notes,this)
+        recyclerView.layoutManager = layoutManager
+        recyclerView.adapter = adapter
+
     }
 
     override fun onNoteClick(position: Int) {
         var bundle = Bundle()
-        bundle.putSerializable("notes",notes.getByIndex(position)?.id)
-        bundle.putSerializable("repository", notes)
+        bundle.putSerializable("notes", position)
 
         var it = Intent(this, NoteActivity::class.java).apply{
             putExtras(bundle)
@@ -61,7 +52,6 @@ class MainActivity : AppCompatActivity(), CardAdapter.CardViewHolder.OnNoteListe
         return when(item.getItemId()){
             R.id.add->{
                 var bundle = Bundle()
-                bundle.putSerializable("repository", notes)
 
                 var it = Intent(this, NoteActivity::class.java).apply{
                     putExtras(bundle)

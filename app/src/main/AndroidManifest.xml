@@ -20,6 +20,10 @@
             </intent-filter>
         </activity>
         <activity android:name=".MainActivity"></activity>
+
+        <receiver android:name=".tasks.alarm.ReceiverAlarm"/>
+
+        <service android:name=".tasks.alarm.NotificationIntentService" android:exported="false"/>
     </application>
 
 </manifest>

@@ -1,66 +1,51 @@
 package com.example.easynotes.repository
 
-import Note
+import com.example.easynotes.model.Note
+import android.content.Context
+import android.provider.ContactsContract
+import androidx.room.Room
+import com.example.easynotes.database.Database
+import com.example.easynotes.database.databaseApp
 import com.example.easynotes.model.Frequency
+import com.example.easynotes.tasks.DeleteNoteTask
+import com.example.easynotes.tasks.InsertNoteTask
+import com.example.easynotes.tasks.UpdateNoteTask
 import java.io.Serializable
 import java.util.*
 import kotlin.collections.ArrayList
 
-public class NoteRepository : Serializable {
+public class NoteRepository(var context: Context): Serializable {
 
-    companion object {
-        var notes: ArrayList<Note> = ArrayList()
-        var index: Long = 1
-    }
+    val db : databaseApp
 
-    constructor(){
-        notes.add(Note(1, "Example", "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum",
-            "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. ",
-        Date(),
-        Frequency.UNIQUE,
-        Date()
-        ))
-
+    init{
+        db = Database.getDatabase(context) as databaseApp
     }
 
     fun addNote(note: Note){
-        note.id = index
-        index+=1
-        notes.add(note)
+        InsertNoteTask(db,note).execute()
     }
 
     fun deleteNote(note: Note){
-        notes.remove(note)
+        DeleteNoteTask(db,note).execute()
     }
 
-    fun listAll(): ArrayList<Note>{
-        return notes
-    }
 
     fun getById(noteID: Long):Note?{
-        for (item : Note in notes){
-            if (noteID == item.id){
-                return item
-            }
-        }
-        return null
+        return db.noteDao().getById(noteID)
     }
 
     fun getByIndex(index: Int): Note?{
-        if(notes.size <= index || index < 0){
-            return null;
-        }
-        else return notes[index];
+        var notes: List<Note> = db.noteDao().getAll()
+        return notes.get(index)
     }
 
     fun returnSize(): Int{
+        var notes: List<Note> = db.noteDao().getAll()
         return notes.size
     }
 
     fun noteUpdate(note:Note){
-        for ((index,value) in notes.withIndex()){
-            notes.set(index, note)
-            return
-        }
+        UpdateNoteTask(db,note).execute()
     }
 }

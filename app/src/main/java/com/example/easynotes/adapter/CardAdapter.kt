@@ -1,6 +1,6 @@
 package com.example.easynotes.adapter
 
-import Note
+import com.example.easynotes.model.Note
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,16 +9,25 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.easynotes.R
 import com.example.easynotes.repository.NoteRepository
+import com.example.easynotes.tasks.BindViewHolderTask
 import java.text.SimpleDateFormat
 
 class CardAdapter(noteRepository: NoteRepository, onNoteListener: CardViewHolder.OnNoteListener): RecyclerView.Adapter<CardAdapter.CardViewHolder>(){
 
     var onNoteListener : CardViewHolder.OnNoteListener
     var noteRepository : NoteRepository
+    var count: Int = 0
 
     init{
         this.noteRepository = noteRepository
         this.onNoteListener = onNoteListener
+
+        Thread(Runnable{
+            while(true){
+                count = noteRepository.returnSize()
+                Thread.sleep(500)
+            }
+        }).start()
     }
 
     class CardViewHolder(view: View, onNoteListener: OnNoteListener) : RecyclerView.ViewHolder(view),View.OnClickListener{
@@ -62,17 +71,11 @@ class CardAdapter(noteRepository: NoteRepository, onNoteListener: CardViewHolder
     }
 
     override fun onBindViewHolder(holder: CardViewHolder, position: Int) {
-        var note : Note = noteRepository.getByIndex(position) as Note
-
-        holder.id = note.id
-        holder.title.setText(note.title)
-        var format: SimpleDateFormat = SimpleDateFormat("dd/MM/yyy HH:mm")
-        holder.alertDate.setText(format.format(note.alert))
-        holder.resume.setText(note.resume)
+       BindViewHolderTask(noteRepository,holder,position).execute()
     }
 
     override fun getItemCount(): Int {
-        return this.noteRepository.returnSize();
+        return count;
     }
 
 

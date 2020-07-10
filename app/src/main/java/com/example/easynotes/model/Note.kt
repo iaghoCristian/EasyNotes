@@ -1,14 +1,34 @@
+package com.example.easynotes.model
+
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 import com.example.easynotes.model.Frequency
 import java.io.Serializable
 import java.util.*
 
+@Entity(tableName = "note")
 class Note: Serializable{
+
+    @PrimaryKey(autoGenerate = true)
     var id: Long;
+
+    @ColumnInfo(name="title")
     var title: String;
+
+    @ColumnInfo(name="resume")
     var resume: String;
-    var description: String;
+
+    @ColumnInfo (name="description")
+    var description: String
+
+    @ColumnInfo (name="creation_date")
     var creationDate: Date;
+
+    @ColumnInfo (name="frequency")
     var frequency: Frequency;
+
+    @ColumnInfo (name="alert")
     var alert: Date;
 
 

@@ -1,8 +1,12 @@
 package com.example.easynotes
 
-import Note
+import android.annotation.TargetApi
+import android.app.AlarmManager
 import android.app.DatePickerDialog
+import android.app.PendingIntent
 import android.app.TimePickerDialog
+import android.content.Context
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.view.Menu
@@ -15,8 +19,13 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatEditText
 import com.example.easynotes.model.Frequency
+import com.example.easynotes.model.Note
 import com.example.easynotes.repository.NoteRepository
+import com.example.easynotes.tasks.FillEditScreenTask
+import com.example.easynotes.tasks.alarm.NotificationIntentService
+import com.example.easynotes.tasks.alarm.ReceiverAlarm
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.gson.Gson
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.*
@@ -25,6 +34,9 @@ import java.util.*
 class NoteActivity : AppCompatActivity() {
 
     var format = SimpleDateFormat("dd/MM/yyyy HH:mm")
+    lateinit var dayFormatted : String
+    lateinit var hourFormatted : String
+
 
     lateinit var date: EditText
     lateinit var title: AppCompatEditText
@@ -34,17 +46,14 @@ class NoteActivity : AppCompatActivity() {
     var editNote: Boolean = false
     lateinit var note: Note
     lateinit var noteRepository: NoteRepository
-    lateinit var dayFormatted : String
-    lateinit var hourFormatted : String
 
     @RequiresApi(Build.VERSION_CODES.N)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_note)
 
-        var id = intent.extras?.getSerializable("notes") as Long?
-        this.noteRepository = intent.extras?.getSerializable("repository") as NoteRepository
-
+        var index = intent.extras?.getSerializable("notes") as Int?
+        this.noteRepository = NoteRepository(this)
 
 
         date = findViewById(R.id.date)
@@ -64,23 +73,20 @@ class NoteActivity : AppCompatActivity() {
 
         }
 
-        if(id!=null) {
+        if(index!=null) {
             editNote = true
-            this.note = noteRepository.getById(id) as Note
 
-
-            date.setText(format.format(note.alert))
-            title.setText(note.title)
-
-
-            resume.setText(note.resume)
-            description.setText(note.description)
+            FillEditScreenTask(noteRepository,title,date,frequency,description,resume,index).execute()
 
             date.isEnabled = false
             title.isEnabled = false
             frequency.isEnabled = false
             resume.isEnabled = false
             description.isEnabled = false
+
+            Thread(Runnable {
+                this.note = noteRepository.getByIndex(index as Int) as Note
+            }).start()
 
         }
 
@@ -89,6 +95,8 @@ class NoteActivity : AppCompatActivity() {
                 onFocusOnDate(view)
             }
         })
+
+
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -112,6 +120,7 @@ class NoteActivity : AppCompatActivity() {
                     }
                     .setPositiveButton(resources.getString(R.string.yes)){ dialog, which ->
                         if(editNote){
+                            cancelAlarm()
                             this.noteRepository.deleteNote(this.note)
                             finish()
                         }
@@ -131,6 +140,7 @@ class NoteActivity : AppCompatActivity() {
         }
     }
 
+    @TargetApi(Build.VERSION_CODES.O)
     fun onClickSave(view : View){
         var format : SimpleDateFormat= SimpleDateFormat("dd/MM/yyyy HH:mm")
         if(this.editNote){
@@ -180,6 +190,9 @@ class NoteActivity : AppCompatActivity() {
 
             note.alert = date
             this.noteRepository.noteUpdate(note)
+
+            cancelAlarm()
+            createAlarm()
 
         }
         else{
@@ -233,7 +246,10 @@ class NoteActivity : AppCompatActivity() {
                 date
             )
             this.noteRepository.addNote(note)
+
+            createAlarm()
         }
+
         finish()
     }
 
@@ -273,5 +289,34 @@ class NoteActivity : AppCompatActivity() {
             calendar.get(Calendar.DAY_OF_MONTH)
         )
         datePickerDialog.show()
+    }
+
+    @RequiresApi(Build.VERSION_CODES.KITKAT)
+    fun createAlarm(){
+        var bundle: Bundle = Bundle()
+
+        bundle.putSerializable("note", note)
+
+        var intent: Intent = Intent(applicationContext,NotificationIntentService::class.java).apply {
+            putExtras(bundle)
+        }
+
+        startService(intent)
+
+    }
+
+    fun cancelAlarm(){
+
+        val alarmManager =
+            getSystemService(Context.ALARM_SERVICE) as? AlarmManager
+        var intent: Intent = Intent(this, ReceiverAlarm::class.java)
+
+        var gson : Gson = Gson()
+        intent.action = note.id.toString()
+        intent.putExtra("note", gson.toJson(note))
+
+        var pendingIntent : PendingIntent = PendingIntent.getBroadcast(this,1,intent,PendingIntent.FLAG_UPDATE_CURRENT)
+        alarmManager?.cancel(pendingIntent)
+
     }
 }
