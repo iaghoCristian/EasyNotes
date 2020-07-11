@@ -44,7 +44,7 @@ class NotificationHelper(context: Context, note: Note) : ContextWrapper(context)
         return NotificationCompat.Builder(applicationContext, note.id.toString())
             .setContentTitle(note.title)
             .setContentText(note.resume)
-            .setSmallIcon(R.drawable.easynotes_rounded_small)
+            .setSmallIcon(R.drawable.easynotes_small)
     }
 
 }

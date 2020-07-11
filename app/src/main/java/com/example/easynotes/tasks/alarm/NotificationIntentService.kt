@@ -64,7 +64,7 @@ class NotificationIntentService : IntentService("createNotification"){
                 alarmManager?.setInexactRepeating(
                     AlarmManager.RTC_WAKEUP,
                     calendar.timeInMillis,
-                    AlarmManager.INTERVAL_HOUR,
+                    AlarmManager.INTERVAL_DAY * 30,
                     pendingIntent
                 )
             }
